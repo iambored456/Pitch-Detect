@@ -39,28 +39,28 @@ window.onload = function() {
   };
   
   function startPitchDetect() {
-    audioContext = audioContext || new AudioContext();
-    navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          googEchoCancellation: "false",
-          googAutoGainControl: "false",
-          googNoiseSuppression: "false",
-          googHighpassFilter: "false"
-        },
-        optional: []
-      }
-    }).then(stream => {
-      mediaStreamSource = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      mediaStreamSource.connect(analyser);
-      updatePitch();
-    }).catch(err => {
-      console.error(`${err.name}: ${err.message}`);
-      alert('Stream generation failed.');
-    });
-  }
+    // Create the audio context inside a user gesture
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then(stream => {
+        mediaStreamSource = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        mediaStreamSource.connect(analyser);
+        updatePitch();
+      })
+      .catch(err => {
+        console.error(`${err.name}: ${err.message}`);
+        alert("Stream generation failed.");
+      });
+}
   
   function toggleLiveInput() {
     if (isPlaying) {

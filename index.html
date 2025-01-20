@@ -280,6 +280,20 @@
             <canvas id="noteCanvas" width="1150" height="500"></canvas>
         </div>
 
+        <div id="debugPanel" style="
+        margin-top: 20px; 
+        border: 1px solid #ccc; 
+        padding: 10px; 
+        max-height: 150px;
+        overflow-y: auto; 
+        font-family: monospace; 
+        font-size: 12px;
+        white-space: pre;
+        ">
+        <!-- Debug messages will appear here -->
+        </div>
+
+
         <!-- Inline JS to set up event listeners and UI wiring -->
         <script>
             document.addEventListener("DOMContentLoaded", function() {

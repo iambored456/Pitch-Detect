@@ -1,9 +1,17 @@
 // ===================== Pitch Detection & Main Loop =====================
 
+function debugLog(message) {
+  const panel = document.getElementById("debugPanel");
+  if (!panel) return; // Safety check
+  panel.textContent += message + "\n";
+}
+
+
 window.onload = function() {
+    debugLog("window.onload: Creating AudioContext");
     audioContext = new AudioContext();
     MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
-  
+    debugLog("window.onload: AudioContext sample rate = " + audioContext.sampleRate);
     detectorElem = document.getElementById("detector");
     canvasElem   = document.getElementById("output");
     pitchElem    = document.getElementById("pitch");
@@ -41,26 +49,29 @@ window.onload = function() {
   function startPitchDetect() {
     // Create the audio context inside a user gesture
     if (!audioContext) {
+      debugLog("Creating new AudioContext inside startPitchDetect()");
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioContext.state === "suspended") {
+      debugLog("Resuming suspended AudioContext...");
       audioContext.resume();
     }
-
+  
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then(stream => {
+        debugLog("Got microphone stream successfully!");
         mediaStreamSource = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 2048;
         mediaStreamSource.connect(analyser);
         updatePitch();
       })
-      .catch(err => {
-        console.error(`${err.name}: ${err.message}`);
-        alert("Stream generation failed.");
-      });
-}
+        .catch(err => {
+          debugLog("Error in getUserMedia: " + err.name + " / " + err.message);
+          alert("Stream generation failed.");
+        });
+    }
   
   function toggleLiveInput() {
     if (isPlaying) {

@@ -63,18 +63,6 @@ function getLineStyle(offsetPC) {
 }
 
 /**
- * getNoteLabel(midi)
- * Returns "C#3", "Eb4", etc. 
- */
-function getNoteLabel(midi) {
-  const noteNames = ["C", "C#", "D", "D#", "E", "F", 
-                     "F#", "G", "G#", "A", "A#", "B"];
-  const noteName = noteNames[midi % 12];
-  const octave = Math.floor(midi / 12) - 1;
-  return `${noteName}${octave}`;
-}
-
-/**
  * drawYAxis(notes, logMin, logMax, plotHeight)
  * Clears & redraws the Y-axis with horizontal lines. 
  * Now uses getOffsetPitchClass(midi) => offsetPC for the line style,

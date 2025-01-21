@@ -139,9 +139,16 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
       plotCtx.lineWidth = 1;
     }
 
-    // Decide which label to draw for this note
-    let displayedLabel = getNoteLabel(midi);
-    if (!displayedLabel) {
+// Function to calculate the note name and octave from a MIDI number
+function getNoteLabel(midi) {
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const noteName = noteNames[midi % 12]; // Note name
+  const octave = Math.floor(midi / 12) - 1; // Octave calculation
+  return `${noteName}${octave}`; // Combine note name and octave
+}
+
+// Inside drawYAxis function, this part determines the label
+let displayedLabel = getNoteLabel(midi); // Already updated to include the octave
       // e.g. out-of-scale note & showAccidentals==false => skip
       return;
     }

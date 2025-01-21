@@ -1,38 +1,43 @@
-// ===================== Drone Logic =====================
+// ===================== drone.js =====================
 
-/**
- * If you already have parseTonicToFrequency(...) in globals.js 
- * or toggles.js, you can delete this local version.
- *
- * Otherwise, keep this version but adapt it to your 
- * new string-based approach.
- */
+// If you already have this in globals.js, remove here.
+// But if you do NOT, adapt to your new string-based approach.
 function parseTonicToFrequency(tonicName, octave) {
-  // Example approach: if your globals.js has 
-  //   const tonicToSemisFromC = { "C":0, "C♯":1, ...};
-  //   function frequencyFromNoteNumber(midi) {...}
-  // Then do:
-  let semisFromC = tonicToSemisFromC[tonicName] || 0;
+  // e.g. "C3" => MIDI 48, from your code we do:
+  //   let semisFromC = tonicToSemisFromC[tonicName] || 0;
+  //   let baseMidiC3 = 48;
+  //   let midi = baseMidiC3 + semisFromC + 12 * (octave - 3);
+  //   return frequencyFromNoteNumber(midi);
 
-  // If you want "C2" => MIDI 36, "C3" => 48, etc.
-  let baseMidiC2 = 36; // or 48 for "C3" as your reference
-  let midi = baseMidiC2 + semisFromC + 12 * (octave - 2);
+  // For demonstration, let's assume you do:
+  if (!window.tonicToSemisFromC || !window.frequencyFromNoteNumber) {
+    console.warn("parseTonicToFrequency missing dependencies!");
+    return 220; // fallback
+  }
+  let semisFromC = tonicToSemisFromC[tonicName] || 0; // 0..11
+  let baseMidiC3 = 48; 
+  let midi = baseMidiC3 + semisFromC + 12 * (octave - 3);
   return frequencyFromNoteNumber(midi);
 }
 
+// Called by your "Drone" button
 function toggleDrone() {
   let droneBtn = document.getElementById("droneBtn");
-
   if (!droneActive) {
-    // Start Drone
+    // Start the Drone
     droneActive = true;
     droneBtn.classList.add("active");
+    
+    // Ensure audioContext is resumed
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
 
-    // Use the *string-based* Tonic => e.g. "C", "G♭", etc.
+    // Get the frequency for the current Tonic + Octave
     let freq = parseTonicToFrequency(currentTonicName, droneOctave);
     startDrone(freq);
   } else {
-    // Stop Drone
+    // Stop the Drone
     droneActive = false;
     droneBtn.classList.remove("active");
     stopDrone();
@@ -41,18 +46,23 @@ function toggleDrone() {
 
 function startDrone(frequency) {
   if (!audioContext) {
-    // Ensure audioContext is created
+    // If not defined, create it
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioContext.state === "suspended") {
-    audioContext.resume();
-  }
 
+  // Create an oscillator
   droneOsc = audioContext.createOscillator();
   droneOsc.type = "sawtooth";
   droneOsc.frequency.value = frequency;
-  // Connect to droneGain which is presumably connected to destination
-  droneOsc.connect(droneGain);  
+
+  // Connect to the Gain node (which should be connected to destination)
+  // If droneGain is not defined, define it in your onload or here:
+  // e.g. droneGain = audioContext.createGain();
+  // droneGain.gain.value = 0.5;
+  // droneGain.connect(audioContext.destination);
+  droneOsc.connect(droneGain);
+
+  // Start producing sound
   droneOsc.start();
 }
 
@@ -75,17 +85,21 @@ function setDroneVolume(volInt) {
 }
 
 /**
- * Called when user clicks an octave button (oct2, oct3, oct4).
+ * Called when user clicks an octave button: oct2Btn, oct3Btn, oct4Btn
  */
 function setDroneOctave(buttonElem) {
   // Remove "active" from all
-  document.getElementById("oct2Btn").classList.remove("active");
-  document.getElementById("oct3Btn").classList.remove("active");
-  document.getElementById("oct4Btn").classList.remove("active");
+  let oct2Btn = document.getElementById("oct2Btn");
+  let oct3Btn = document.getElementById("oct3Btn");
+  let oct4Btn = document.getElementById("oct4Btn");
+  if (oct2Btn) oct2Btn.classList.remove("active");
+  if (oct3Btn) oct3Btn.classList.remove("active");
+  if (oct4Btn) oct4Btn.classList.remove("active");
 
-  // Add active to the clicked one
+  // Add active to clicked
   buttonElem.classList.add("active");
 
+  // Set droneOctave
   if (buttonElem.id === "oct2Btn") {
     droneOctave = 2;
   } else if (buttonElem.id === "oct4Btn") {
@@ -94,7 +108,7 @@ function setDroneOctave(buttonElem) {
     droneOctave = 3;
   }
 
-  // If the drone is currently on, update frequency
+  // If drone is active, update freq
   if (droneActive && droneOsc) {
     let freq = parseTonicToFrequency(currentTonicName, droneOctave);
     droneOsc.frequency.value = freq;

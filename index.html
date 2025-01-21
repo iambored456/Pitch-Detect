@@ -1,348 +1,321 @@
 <!doctype html>
 <html>
-    <head>
-        <title>Pitch Detector</title>
-        <link href="https://fonts.googleapis.com/css?family=Alike" rel="stylesheet" type="text/css">
-        <style>
-            body { 
-                font: 14pt 'Alike', sans-serif;
-                margin: 0;
-                padding: 20px;
-                box-sizing: border-box;
-            }
-            .confident { color: black; }
-            .vague { color: lightgrey; }
+<head>
+  <title>Pitch Detector</title>
+  <link href="https://fonts.googleapis.com/css?family=Alike" rel="stylesheet" type="text/css">
+  <style>
+    body { 
+      font: 14pt 'Alike', sans-serif;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .confident { color: black; }
+    .vague { color: lightgrey; }
 
-            /* Main Control Panel in one row */
-            #controlPanel {
-                display: flex;
-                align-items: center;
-                gap: 20px;
-                margin: 0 auto;
-                max-width: 1300px;
-                flex-wrap: wrap; /* to handle smaller screens */
-            }
-            
-            /* Start Button (green) */
-            button.startBtn {
-                padding: 10px 20px;
-                font-size: 16px;
-                cursor: pointer;
-                border: none;
-                border-radius: 5px;
-                background-color: #4CAF50;
-                color: white;
-                transition: background-color 0.3s;
-            }
-            button.startBtn:hover {
-                background-color: #45a049;
-            }
+    /* Main Control Panel in one row */
+    #controlPanel {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 0 auto;
+      max-width: 1300px;
+      flex-wrap: wrap; /* to handle smaller screens */
+    }
+    
+    /* Start Button (green) */
+    button.startBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #4CAF50;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    button.startBtn:hover {
+      background-color: #45a049;
+    }
 
-            /* Detector Box */
-            #detector {
-                width: 200px;
-                height: 80px;
-                border: 4px solid gray;
-                border-radius: 8px;
-                text-align: center;
-                padding-top: 5px;
-                background-color: #f9f9f9;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            }
-            #pitch { font-size: 24px; }
-            #note { font-size: 40px; }
-            #output {
-                width: 100px;
-                height: 42px;
-            }
-            #detune { display: none; }
+    /* Detector Box */
+    #detector {
+      width: 200px;
+      height: 80px;
+      border: 4px solid gray;
+      border-radius: 8px;
+      text-align: center;
+      padding-top: 5px;
+      background-color: #f9f9f9;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #pitch { font-size: 24px; }
+    #note { font-size: 40px; }
+    #output {
+      width: 100px;
+      height: 42px;
+    }
+    #detune { display: none; }
 
-            /* 
-               TONIC BOX 
-               A container with a subtle border & rounding 
-               that holds the Tonic dropdown & toggles 
-            */
-            #tonicBox {
-                border: 2px solid #ccc;
-                border-radius: 8px;
-                padding: 10px 15px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-            #tonicBox label {
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            }
-            #tonicBox select, 
-            #tonicBox input[type="checkbox"] {
-                transform: scale(1.05);
-            }
+    /* Tonic Box */
+    #tonicBox {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #tonicBox label {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    #tonicBox select, 
+    #tonicBox input[type="checkbox"] {
+      transform: scale(1.05);
+    }
 
-            /* 
-               DRONE BOX 
-               Another container for the Drone button, 
-               octave toggles, and volume slider 
-            */
-            #droneBox {
-                border: 2px solid #ccc;
-                border-radius: 8px;
-                padding: 10px 15px;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-            }
+    /* Drone Box */
+    #droneBox {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-            /* DRONE button (blue) */
-            button.droneBtn {
-                padding: 10px 20px;
-                font-size: 16px;
-                cursor: pointer;
-                border: none;
-                border-radius: 5px;
-                background-color: #2196F3; /* blue */
-                color: white;
-                transition: background-color 0.3s;
-            }
-            button.droneBtn:hover {
-                background-color: #1A78C2;
-            }
-            button.droneBtn.active {
-                background-color: #0D47A1; /* pressed state */
-            }
+    /* DRONE button (blue) */
+    button.droneBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #2196F3;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    button.droneBtn:hover {
+      background-color: #1A78C2;
+    }
+    button.droneBtn.active {
+      background-color: #0D47A1; /* pressed state */
+    }
 
-            /* Octave toggles container */
-            #octaveToggles {
-                display: flex;
-                gap: 10px;
-            }
-            .octaveBtn {
-                padding: 6px 12px;
-                font-size: 14px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                background-color: #f1f1f1;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-            .octaveBtn:hover {
-                background-color: #e2e2e2;
-            }
-            .octaveBtn.active {
-                background-color: #ccc;
-                border-color: #999;
-            }
+    /* Octave toggles container */
+    #octaveToggles {
+      display: flex;
+      gap: 10px;
+    }
+    .octaveBtn {
+      padding: 6px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f1f1f1;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .octaveBtn:hover {
+      background-color: #e2e2e2;
+    }
+    .octaveBtn.active {
+      background-color: #ccc;
+      border-color: #999;
+    }
 
-            /* Volume Slider container */
-            #volumeContainer {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-                font-size: 14px;
-            }
-            #volumeSliderWrapper {
-                position: relative;
-                display: inline-block;
-                width: 150px; /* slider width */
-            }
-            #volumeSlider {
-                width: 100%;
-            }
-            .volumeLabels {
-                position: absolute;
-                top: 18px; /* just beneath the slider */
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                font-size: 12px;
-                pointer-events: none;
-            }
+    /* Volume Slider container */
+    #volumeContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+    }
+    #volumeSliderWrapper {
+      position: relative;
+      display: inline-block;
+      width: 150px; /* slider width */
+    }
+    #volumeSlider {
+      width: 100%;
+    }
+    .volumeLabels {
+      position: absolute;
+      top: 18px; 
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      pointer-events: none;
+    }
 
-            /* The frequency + notes container */
-            #plotContainer {
-                position: relative;
-                width: 1150px;
-                height: 500px;
-                margin: 20px auto 0;
-            }
-            #frequencyPlot {
-                border: 1px solid #d3d3d3;
-            }
-            #noteCanvas {
-                position: absolute;
-                top: 0;
-                left: 0;
-                pointer-events: none;
-            }
-        </style>
-    </head>
+    /* Frequency + notes container */
+    #plotContainer {
+      position: relative;
+      width: 1150px;
+      height: 500px;
+      margin: 20px auto 0;
+    }
+    #frequencyPlot {
+      border: 1px solid #d3d3d3;
+    }
+    #noteCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
 
-    <body>
+<body>
 
-        <!-- Load split JS files in order -->
-        <!-- Adjust the paths (js/...) based on your actual file locations -->
-        <script src="js/globals.js"></script>
-        <script src="js/toggles.js"></script>
-        <script src="js/drone.js"></script>
-        <script src="js/plotting.js"></script>
-        <script src="js/pitchdetection.js"></script>
+  <!-- (Optional) Debug panel removed
+  <div id="debugPanel"> ... </div>
+  -->
 
-        <!-- Main Control Panel (horizontal) -->
-        <div id="controlPanel">
+  <!-- Main Control Panel -->
+  <div id="controlPanel">
 
-            <!-- Start pitch detection -->
-            <button class="startBtn" onclick="startPitchDetect();" aria-label="Start Pitch Detection">Start</button>
-            
-            <!-- Detector Readout -->
-            <div id="detector" class="vague">
-                <div>
-                    <span id="pitch">--</span> Hz
-                </div>
-                <div>
-                    <span id="note">--</span>
-                </div>
-                <canvas id="output" width="100" height="42"></canvas>
-                <div id="detune">
-                    <span id="detune_amt">--</span>
-                    <span id="flat">cents &#9837;</span>
-                    <span id="sharp">cents &#9839;</span>
-                </div>
-            </div>
+    <!-- Start pitch detection -->
+    <button class="startBtn" onclick="startPitchDetect();" aria-label="Start Pitch Detection">Start</button>
+    
+    <!-- Detector Readout -->
+    <div id="detector" class="vague">
+      <div><span id="pitch">--</span> Hz</div>
+      <div><span id="note">--</span></div>
+      <canvas id="output" width="100" height="42"></canvas>
+      <div id="detune">
+          <span id="detune_amt">--</span>
+          <span id="flat">cents &#9837;</span>
+          <span id="sharp">cents &#9839;</span>
+      </div>
+    </div>
 
-            <!-- Tonic & Toggles Box -->
-            <div id="tonicBox">
-                <label for="tonicSelect">Tonic:</label>
-                <select id="tonicSelect" aria-label="Select Tonic">
-                  <option value="0" selected>C</option>
-                  <option value="1">C♯</option>
-                  <option value="2">D</option>
-                  <option value="3">D♯</option>
-                  <option value="4">E</option>
-                  <option value="5">F</option>
-                  <option value="6">F♯</option>
-                  <option value="7">G</option>
-                  <option value="8">G♯</option>
-                  <option value="9">A</option>
-                  <option value="10">A♯</option>
-                  <option value="11">B</option>
-                </select>
+    <!-- Tonic & Toggles Box -->
+    <div id="tonicBox">
+      <label for="tonicSelect">Tonic:</label>
+      <!-- Updated to list all 17 pitch classes explicitly -->
+      <select id="tonicSelect" aria-label="Select Tonic">
+        <option value="C">C</option>
+        <option value="C♯">C♯</option>
+        <option value="D♭">D♭</option>
+        <option value="D">D</option>
+        <option value="D♯">D♯</option>
+        <option value="E♭">E♭</option>
+        <option value="E">E</option>
+        <option value="F">F</option>
+        <option value="F♯">F♯</option>
+        <option value="G♭">G♭</option>
+        <option value="G">G</option>
+        <option value="G♯">G♯</option>
+        <option value="A♭">A♭</option>
+        <option value="A">A</option>
+        <option value="A♯">A♯</option>
+        <option value="B♭">B♭</option>
+        <option value="B">B</option>
+      </select>
 
-                <label>
-                  <input type="checkbox" id="labelToggle" />
-                  degrees
-                </label>
+      <!-- Degrees checkbox -->
+      <label>
+        <input type="checkbox" id="labelToggle" />
+        degrees
+      </label>
 
-                <label>
-                  <input type="checkbox" id="flatsToggle" />
-                  ♭
-                </label>
+      <!-- Removed the flats/sharps toggles -->
 
-                <label>
-                  <input type="checkbox" id="sharpsToggle" />
-                  ♯
-                </label>
-            </div>
+      <!-- Show Accidentals toggle -->
+      <label>
+        <input type="checkbox" id="accidentalsToggle" />
+        Show Accidentals
+      </label>
+    </div>
 
-            <!-- Drone Box -->
-            <div id="droneBox">
-                <!-- Drone button -->
-                <button class="droneBtn" id="droneBtn">Drone</button>
-                
-                <!-- Octave toggles -->
-                <div id="octaveToggles">
-                    <button class="octaveBtn" id="oct2Btn">Oct 2</button>
-                    <button class="octaveBtn active" id="oct3Btn">Oct 3</button>
-                    <button class="octaveBtn" id="oct4Btn">Oct 4</button>
-                </div>
+    <!-- Drone Box -->
+    <div id="droneBox">
+      <button class="droneBtn" id="droneBtn">Drone</button>
+      
+      <div id="octaveToggles">
+        <button class="octaveBtn" id="oct2Btn">Oct 2</button>
+        <button class="octaveBtn active" id="oct3Btn">Oct 3</button>
+        <button class="octaveBtn" id="oct4Btn">Oct 4</button>
+      </div>
 
-                <!-- Volume Slider -->
-                <div id="volumeContainer">
-                    <label for="volumeSlider">Volume</label>
-                    <div id="volumeSliderWrapper">
-                        <input type="range" id="volumeSlider" min="0" max="100" value="50" />
-                        <div class="volumeLabels">
-                            <span>0</span>
-                            <span>50</span>
-                            <span>100</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+      <div id="volumeContainer">
+        <label for="volumeSlider">Volume</label>
+        <div id="volumeSliderWrapper">
+          <input type="range" id="volumeSlider" min="0" max="100" value="50" />
+          <div class="volumeLabels">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Plot + Note Visualization -->
-        <div id="plotContainer">
-            <canvas id="frequencyPlot" width="1150" height="500"></canvas>
-            <canvas id="noteCanvas" width="1150" height="500"></canvas>
-        </div>
+  </div>
 
-        <div id="debugPanel" style="
-        margin-top: 20px; 
-        border: 1px solid #ccc; 
-        padding: 10px; 
-        max-height: 150px;
-        overflow-y: auto; 
-        font-family: monospace; 
-        font-size: 12px;
-        white-space: pre;
-        ">
-        <!-- Debug messages will appear here -->
-        </div>
+  <!-- Plot + Note Visualization -->
+  <div id="plotContainer">
+    <canvas id="frequencyPlot" width="1150" height="500"></canvas>
+    <canvas id="noteCanvas" width="1150" height="500"></canvas>
+  </div>
 
+  <!-- JS Files -->
+  <script src="js/globals.js"></script>
+  <script src="js/toggles.js"></script>
+  <script src="js/drone.js"></script>
+  <script src="js/plotAxis.js"></script>
+  <script src="js/plotMain.js"></script>
+  <script src="js/pitchdetection.js"></script>
 
-        <!-- Inline JS to set up event listeners and UI wiring -->
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                // Tonic
-                document.getElementById("tonicSelect").addEventListener("change", function() {
-                    let selectedValue = parseInt(this.value, 10);
-                    setTonic(selectedValue);
-                });
+  <!-- Inline JS to wire up UI events -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Tonic dropdown
+      document.getElementById("tonicSelect").addEventListener("change", function() {
+        setTonic(this.value); 
+      });
 
-                // Scale degrees
-                document.getElementById("labelToggle").addEventListener("change", function() {
-                    let useDegrees = this.checked;
-                    setLabelMode(useDegrees);
-                });
+      // Degrees
+      document.getElementById("labelToggle").addEventListener("change", function() {
+        setLabelMode(this.checked);
+      });
 
-                // Flats
-                document.getElementById("flatsToggle").addEventListener("change", function() {
-                    setShowFlats(this.checked);
-                });
+      // Show Accidentals
+      document.getElementById("accidentalsToggle").addEventListener("change", function() {
+        setAccidentalsVisibility(this.checked);
+      });
 
-                // Sharps
-                document.getElementById("sharpsToggle").addEventListener("change", function() {
-                    setShowSharps(this.checked);
-                });
+      // Drone button
+      const droneBtn = document.getElementById("droneBtn");
+      droneBtn.addEventListener("click", function() {
+        toggleDrone(); // your function in drone.js
+      });
 
-                // Drone button
-                const droneBtn = document.getElementById("droneBtn");
-                droneBtn.addEventListener("click", function() {
-                    toggleDrone();
-                });
+      // Octave toggles
+      const oct2Btn = document.getElementById("oct2Btn");
+      const oct3Btn = document.getElementById("oct3Btn");
+      const oct4Btn = document.getElementById("oct4Btn");
 
-                // Octave toggles
-                const oct2Btn = document.getElementById("oct2Btn");
-                const oct3Btn = document.getElementById("oct3Btn");
-                const oct4Btn = document.getElementById("oct4Btn");
+      [oct2Btn, oct3Btn, oct4Btn].forEach(btn => {
+        btn.addEventListener("click", function() {
+          setDroneOctave(this);
+        });
+      });
 
-                [oct2Btn, oct3Btn, oct4Btn].forEach(btn => {
-                    btn.addEventListener("click", function() {
-                        setDroneOctave(this); 
-                    });
-                });
-
-                // Volume slider
-                const volumeSlider = document.getElementById("volumeSlider");
-                volumeSlider.addEventListener("input", function() {
-                    let vol = parseInt(this.value, 10);
-                    setDroneVolume(vol);
-                });
-            });
-        </script>
-    </body>
+      // Volume slider
+      const volumeSlider = document.getElementById("volumeSlider");
+      volumeSlider.addEventListener("input", function() {
+        let vol = parseInt(this.value, 10);
+        setDroneVolume(vol);
+      });
+    });
+  </script>
+</body>
 </html>

@@ -30,21 +30,6 @@ function generateNotes(minFreq, maxFreq) {
  * etc.
  */
 function getLineStyle(offsetPC) {
-  switch (offsetPC) {
-    case 0:  // Tonic
-      return { color: "#FF0000", dash: [], width: 2 }; // Red line
-    case 7:  // 5th above tonic
-      return "greyRect"; // fill a grey rectangle row
-    case 5:  // 4th above tonic
-      return { color: "#000000", dash: [5, 5], width: 1 };
-    // Add or remove cases as you like
-    default:
-      // Possibly just a normal black line
-      return { color: "#000000", dash: [], width: 1 };
-  }
-}
-
-function getLineStyle(offsetPC) {
   // This switch returns a style object or "greyRect" or null
   // for each offsetPC (0..11).
   switch (offsetPC) {
@@ -77,11 +62,23 @@ function getLineStyle(offsetPC) {
   }
 }
 
+/**
+ * getNoteLabel(midi)
+ * Returns "C#3", "Eb4", etc. 
+ */
+function getNoteLabel(midi) {
+  const noteNames = ["C", "C#", "D", "D#", "E", "F", 
+                     "F#", "G", "G#", "A", "A#", "B"];
+  const noteName = noteNames[midi % 12];
+  const octave = Math.floor(midi / 12) - 1;
+  return `${noteName}${octave}`;
+}
 
 /**
  * drawYAxis(notes, logMin, logMax, plotHeight)
  * Clears & redraws the Y-axis with horizontal lines. 
- * Now uses getOffsetPitchClass(midi) => offsetPC for the line style.
+ * Now uses getOffsetPitchClass(midi) => offsetPC for the line style,
+ * and draws labels including octave numbers.
  */
 function drawYAxis(notes, logMin, logMax, plotHeight) {
   if (!plotCtx) return;
@@ -102,6 +99,7 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
 
   let prevY = plotHeight;
 
+  // Loop over each note
   notes.forEach(note => {
     let { midi, freq } = note;
 
@@ -139,27 +137,20 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
       plotCtx.lineWidth = 1;
     }
 
-// Function to calculate the note name and octave from a MIDI number
-function getNoteLabel(midi) {
-  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const noteName = noteNames[midi % 12]; // Note name
-  const octave = Math.floor(midi / 12) - 1; // Octave calculation
-  return `${noteName}${octave}`; // Combine note name and octave
-}
-
-// Inside drawYAxis function, this part determines the label
-let displayedLabel = getNoteLabel(midi); // Already updated to include the octave
-      // e.g. out-of-scale note & showAccidentals==false => skip
+    // Get the note label including octave, e.g. "C3", "F#4"
+    let displayedLabel = getNoteLabel(midi);
+    if (!displayedLabel) {
+      // e.g. if you had logic to skip accidental notes, etc.
       return;
     }
 
     // If you want Tonic’s offset=0 => index 0 color, 
-    // do offset-based background color:
+    // you might do offset-based color:
     // let bgColor = labelBackgroundColors[offsetPC] || "#fff";
 
     // Or if you want the absolute pitch class color:
     let pc = midi % 12;
-    let bgColor = labelBackgroundColors[offsetPC] || "#fff";
+    let bgColor = labelBackgroundColors[pc] || "#fff";
 
     // In-scale => bigger font, out-of-scale => smaller
     let fontSize = isInMajorScale(pc) ? 18 : 14;
@@ -204,7 +195,6 @@ let displayedLabel = getNoteLabel(midi); // Already updated to include the octav
   plotCtx.lineTo(plotWidth + yAxisWidth, plotHeight);
   plotCtx.stroke();
 }
-
 
 /**
  * scaleY(midiValue)

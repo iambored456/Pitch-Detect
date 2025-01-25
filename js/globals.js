@@ -20,6 +20,7 @@ var droneOsc = null;
 var droneGain = null;
 var droneActive = false;
 var droneOctave = 3;
+var defaultVolume = 0.25;
 
 // ===================== Tonics & Toggles =====================
 
@@ -57,6 +58,8 @@ var maxConnections = 5;
 var notesInRange = [];
 var logMin = 0;
 var logMax = 0;
+
+
 
 // Pitch detection buffers
 var rafID = null;
@@ -227,34 +230,23 @@ function isInMajorScale(pc) {
  * depending on useScaleDegrees and showAccidentals.
  */
 function getNoteLabel(midiNote) {
-  const pc = midiNote % 12;
-  const octave = Math.floor(midiNote / 12) - 1;
-
-  // Is this pitch class in the major scale of the current tonic?
+  let pc = midiNote % 12;
   if (isInMajorScale(pc)) {
+    // In-scale
     if (useScaleDegrees) {
-      // Show the scale degree number (1..7) only
-      const scalePCs = majorScales[currentTonicName];
-      const idx = scalePCs.indexOf(pc);
-      // If we didn't find pc in the scale array for some reason, just return ""
-      if (idx < 0) return "";
-      // e.g. scale degree "3"
-      return String(idx + 1);  
+      let scalePCs = majorScales[currentTonicName];
+      let idx = scalePCs.indexOf(pc);
+      return (idx >= 0) ? String(idx + 1) : "";
     } else {
-      // Show the spelled name + octave, e.g. "C♯3", "F4"
-      const mapObj = scaleSpellings[currentTonicName] || {};
-      const spelled = mapObj[pc] || "";
-      if (!spelled) return "";
-      return spelled + String(octave);
+      // spelled name
+      let mapObj = scaleSpellings[currentTonicName] || {};
+      return mapObj[pc] || "";
     }
   } else {
-    // Out of scale => only show if showAccidentals
+    // out of scale => only show if showAccidentals
     if (showAccidentals) {
-      // e.g. "C♯/D♭3"
-      const slashName = pitchNamesBoth[pc] || "";
-      return slashName + String(octave);
+      return pitchNamesBoth[pc] || "";
     }
-    // If showAccidentals == false, skip it (return empty)
     return "";
   }
 }

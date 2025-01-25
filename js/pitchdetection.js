@@ -1,5 +1,7 @@
 // ===================== Pitch Detection & Main Loop =====================
 
+let isDetecting = false;
+
 function debugLog(message) {
   const panel = document.getElementById("debugPanel");
   if (!panel) return; // Safety check
@@ -47,31 +49,82 @@ window.onload = function() {
   };
   
   function startPitchDetect() {
-    // Create the audio context inside a user gesture
-    if (!audioContext) {
-      debugLog("Creating new AudioContext inside startPitchDetect()");
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioContext.state === "suspended") {
-      debugLog("Resuming suspended AudioContext...");
-      audioContext.resume();
-    }
-  
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then(stream => {
-        debugLog("Got microphone stream successfully!");
-        mediaStreamSource = audioContext.createMediaStreamSource(stream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        mediaStreamSource.connect(analyser);
-        updatePitch();
-      })
+    let startBtn = document.getElementById("startBtn");
+    
+    if (!isDetecting) {
+        // Start detection
+        navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: false,
+                autoGainControl: false,
+                noiseSuppression: false,
+                highpassFilter: false
+            }
+        })
+        .then(stream => {
+            // Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            // Update button state
+            startBtn.textContent = "Stop";
+            startBtn.classList.add("active");
+            isDetecting = true;
+            
+            // Set up audio processing
+            mediaStreamSource = audioContext.createMediaStreamSource(stream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            mediaStreamSource.connect(analyser);
+            updatePitch();
+        })
         .catch(err => {
-          debugLog("Error in getUserMedia: " + err.name + " / " + err.message);
-          alert("Stream generation failed.");
+            console.error(`${err.name}: ${err.message}`);
+            alert('Live input failed.');
+            startBtn.textContent = "Start";
+            startBtn.classList.remove("active");
+            isDetecting = false;
         });
+    } else {
+        // Stop detection
+        startBtn.textContent = "Start";
+        startBtn.classList.remove("active");
+        isDetecting = false;
+        
+        // Stop audio processing
+        if (mediaStreamSource) {
+            mediaStreamSource.disconnect();
+            mediaStreamSource = null;
+        }
+        if (analyser) {
+            analyser.disconnect();
+            analyser = null;
+        }
+        
+        // Cancel animation frame
+        if (rafID) {
+            cancelAnimationFrame(rafID);
+            rafID = null;
+        }
+        
+        // Clear plot data
+        plotData = [];
+        frequencies = [];
+        
+        // Clear note visualization
+        if (noteCtx) {
+            noteCtx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+        }
+        
+        // Reset detector display
+        detectorElem.className = "vague";
+        pitchElem.innerText = "--";
+        noteElem.innerText = "-";
+        document.getElementById("octave").innerText = "-";
+        detuneAmount.innerText = "--";
     }
+}
   
   function toggleLiveInput() {
     if (isPlaying) {
@@ -166,35 +219,42 @@ window.onload = function() {
   
   // Main animation loop for pitch detection
   function updatePitch(time) {
-    analyser.getFloatTimeDomainData(buf);
-    let ac = autoCorrelate(buf, audioContext.sampleRate);
+    if (isDetecting) {
+      analyser.getFloatTimeDomainData(buf);
+      let ac = autoCorrelate(buf, audioContext.sampleRate);
   
-    if (ac === -1) {
-      detectorElem.className = "vague";
-      pitchElem.innerText = "--";
-      noteElem.innerText = "-";
-      detuneElem.className = "";
-      detuneAmount.innerText = "--";
-  
-      updatePlot(0);
-    } else {
-      detectorElem.className = "confident";
-      let pitch = ac;
-      pitchElem.innerText = Math.round(pitch);
-      let note = noteFromPitch(pitch);
-      noteElem.innerHTML = noteStrings[note % 12];
-  
-      let detune = centsOffFromPitch(pitch, note);
-      if (detune === 0) {
+      if (ac === -1) {
+        detectorElem.className = "vague";
+        pitchElem.innerText = "--";
+        noteElem.innerText = "-";
+        document.getElementById("octave").innerText = "-";
         detuneElem.className = "";
-        detuneAmount.innerHTML = "--";
+        detuneAmount.innerText = "--";
       } else {
-        detuneElem.className = (detune < 0) ? "flat" : "sharp";
-        detuneAmount.innerHTML = Math.abs(detune);
+        detectorElem.className = "confident";
+        pitchElem.innerText = Math.round(ac);
+        let note = noteFromPitch(ac);
+        noteElem.innerHTML = noteStrings[note % 12];
+        document.getElementById("octave").innerText = Math.floor(note/12) - 1;
+  
+        let detune = centsOffFromPitch(ac, note);
+        if (detune === 0) {
+          detuneElem.className = "";
+          detuneAmount.innerHTML = "--";
+        } else {
+          detuneElem.className = (detune < 0) ? "flat" : "sharp";
+          detuneAmount.innerHTML = Math.abs(detune);
+        }
+        updatePlot(ac);
       }
-      updatePlot(pitch);
     }
   
+    // Always animate the plot
+    if (plotCtx) {
+      reDrawPlot();
+    }
+  
+    // Continue animation loop
     if (!window.requestAnimationFrame) {
       window.requestAnimationFrame = window.webkitRequestAnimationFrame;
     }

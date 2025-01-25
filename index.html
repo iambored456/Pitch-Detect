@@ -29,17 +29,21 @@
   <div id="controlPanel">
 
     <!-- Start pitch detection -->
-    <button class="startBtn" onclick="startPitchDetect();" aria-label="Start Pitch Detection">Start</button>
+    <button id="startBtn" class="startBtn" onclick="startPitchDetect();" aria-label="Start Pitch Detection">
+      Start
+    </button>
     
     <!-- Detector Readout -->
     <div id="detector" class="vague">
       <div><span id="pitch">--</span> Hz</div>
-      <div><span id="note">--</span></div>
+      <div>
+        <span id="note">--</span><span id="octave">-</span>
+      </div>
       <canvas id="output" width="100" height="42"></canvas>
       <div id="detune">
-          <span id="detune_amt">--</span>
-          <span id="flat">cents &#9837;</span>
-          <span id="sharp">cents &#9839;</span>
+        <span id="detune_amt">--</span>
+        <span id="flat">cents &#9837;</span>
+        <span id="sharp">cents &#9839;</span>
       </div>
     </div>
 
@@ -93,7 +97,7 @@
       <div id="volumeContainer">
         <label for="volumeSlider">Volume</label>
         <div id="volumeSliderWrapper">
-          <input type="range" id="volumeSlider" min="0" max="100" value="50" />
+          <input type="range" id="volumeSlider" min="0" max="100" value="25" />
           <div class="volumeLabels">
             <span>0</span>
             <span>50</span>
@@ -113,9 +117,9 @@
 
   <!-- JS Files -->
   <script src="js/globals.js"></script>
+  <script src="js/plotAxis.js"></script>
   <script src="js/toggles.js"></script>
   <script src="js/drone.js"></script>
-  <script src="js/plotAxis.js"></script>
   <script src="js/plotMain.js"></script>
   <script src="js/pitchdetection.js"></script>
 

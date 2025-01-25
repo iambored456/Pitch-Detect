@@ -30,6 +30,21 @@ function generateNotes(minFreq, maxFreq) {
  * etc.
  */
 function getLineStyle(offsetPC) {
+  switch (offsetPC) {
+    case 0:  // Tonic
+      return { color: "#FF0000", dash: [], width: 2 }; // Red line
+    case 7:  // 5th above tonic
+      return "greyRect"; // fill a grey rectangle row
+    case 5:  // 4th above tonic
+      return { color: "#000000", dash: [5, 5], width: 1 };
+    // Add or remove cases as you like
+    default:
+      // Possibly just a normal black line
+      return { color: "#000000", dash: [], width: 1 };
+  }
+}
+
+function getLineStyle(offsetPC) {
   // This switch returns a style object or "greyRect" or null
   // for each offsetPC (0..11).
   switch (offsetPC) {
@@ -62,11 +77,11 @@ function getLineStyle(offsetPC) {
   }
 }
 
+
 /**
  * drawYAxis(notes, logMin, logMax, plotHeight)
  * Clears & redraws the Y-axis with horizontal lines. 
- * Now uses getOffsetPitchClass(midi) => offsetPC for the line style,
- * and draws labels including octave numbers.
+ * Now uses getOffsetPitchClass(midi) => offsetPC for the line style.
  */
 function drawYAxis(notes, logMin, logMax, plotHeight) {
   if (!plotCtx) return;
@@ -87,7 +102,6 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
 
   let prevY = plotHeight;
 
-  // Loop over each note
   notes.forEach(note => {
     let { midi, freq } = note;
 
@@ -109,7 +123,7 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
       }
     }
     prevY = y;
-
+    
     // If style is an object => draw line
     if (style && typeof style === "object") {
       plotCtx.strokeStyle = style.color;
@@ -125,20 +139,20 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
       plotCtx.lineWidth = 1;
     }
 
-    // Get the note label including octave, e.g. "C3", "F#4"
+    // Decide which label to draw for this note
     let displayedLabel = getNoteLabel(midi);
     if (!displayedLabel) {
-      // e.g. if you had logic to skip accidental notes, etc.
+      // e.g. out-of-scale note & showAccidentals==false => skip
       return;
     }
 
     // If you want Tonic’s offset=0 => index 0 color, 
-    // you might do offset-based color:
+    // do offset-based background color:
     // let bgColor = labelBackgroundColors[offsetPC] || "#fff";
 
     // Or if you want the absolute pitch class color:
     let pc = midi % 12;
-    let bgColor = labelBackgroundColors[pc] || "#fff";
+    let bgColor = isInMajorScale(pc) ? labelBackgroundColors[offsetPC] : null;
 
     // In-scale => bigger font, out-of-scale => smaller
     let fontSize = isInMajorScale(pc) ? 18 : 14;
@@ -150,17 +164,23 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
     let leftX  = belongsToA ? leftColumnX1 : leftColumnX2;
     let rightX = belongsToA ? rightColumnX1 : rightColumnX2;
 
-    // Left background
-    plotCtx.fillStyle = bgColor;
-    plotCtx.fillRect(leftX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
+    if (bgColor) {
+      // Left background
+      plotCtx.fillStyle = bgColor;
+      plotCtx.fillRect(leftX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
+    }
+
     // Left text
     plotCtx.fillStyle = "#000";
     plotCtx.textAlign = "center";
     plotCtx.fillText(displayedLabel, leftX, y);
 
-    // Right background
-    plotCtx.fillStyle = bgColor;
-    plotCtx.fillRect(rightX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
+    if (bgColor) {
+      // Right background
+      plotCtx.fillStyle = bgColor;
+      plotCtx.fillRect(rightX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
+    }
+
     // Right text
     plotCtx.fillStyle = "#000";
     plotCtx.fillText(displayedLabel, rightX, y);
@@ -183,6 +203,7 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
   plotCtx.lineTo(plotWidth + yAxisWidth, plotHeight);
   plotCtx.stroke();
 }
+
 
 /**
  * scaleY(midiValue)

@@ -2,181 +2,31 @@
 <html>
 <head>
   <title>Pitch Detector</title>
-  <link href="https://fonts.googleapis.com/css?family=Alike" rel="stylesheet" type="text/css">
-  <style>
-    body { 
-      font: 14pt 'Alike', sans-serif;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .confident { color: black; }
-    .vague { color: lightgrey; }
-
-    /* Main Control Panel in one row */
-    #controlPanel {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin: 0 auto;
-      max-width: 1300px;
-      flex-wrap: wrap; /* to handle smaller screens */
-    }
-    
-    /* Start Button (green) */
-    button.startBtn {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background-color: #4CAF50;
-      color: white;
-      transition: background-color 0.3s;
-    }
-    button.startBtn:hover {
-      background-color: #45a049;
-    }
-
-    /* Detector Box */
-    #detector {
-      width: 200px;
-      height: 80px;
-      border: 4px solid gray;
-      border-radius: 8px;
-      text-align: center;
-      padding-top: 5px;
-      background-color: #f9f9f9;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    #pitch { font-size: 24px; }
-    #note { font-size: 40px; }
-    #output {
-      width: 100px;
-      height: 42px;
-    }
-    #detune { display: none; }
-
-    /* Tonic Box */
-    #tonicBox {
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      padding: 10px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    #tonicBox label {
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    #tonicBox select, 
-    #tonicBox input[type="checkbox"] {
-      transform: scale(1.05);
-    }
-
-    /* Drone Box */
-    #droneBox {
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      padding: 10px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    /* DRONE button (blue) */
-    button.droneBtn {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background-color: #2196F3;
-      color: white;
-      transition: background-color 0.3s;
-    }
-    button.droneBtn:hover {
-      background-color: #1A78C2;
-    }
-    button.droneBtn.active {
-      background-color: #0D47A1; /* pressed state */
-    }
-
-    /* Octave toggles container */
-    #octaveToggles {
-      display: flex;
-      gap: 10px;
-    }
-    .octaveBtn {
-      padding: 6px 12px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #f1f1f1;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .octaveBtn:hover {
-      background-color: #e2e2e2;
-    }
-    .octaveBtn.active {
-      background-color: #ccc;
-      border-color: #999;
-    }
-
-    /* Volume Slider container */
-    #volumeContainer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      font-size: 14px;
-    }
-    #volumeSliderWrapper {
-      position: relative;
-      display: inline-block;
-      width: 150px; /* slider width */
-    }
-    #volumeSlider {
-      width: 100%;
-    }
-    .volumeLabels {
-      position: absolute;
-      top: 18px; 
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      pointer-events: none;
-    }
-
-    /* Frequency + notes container */
-    #plotContainer {
-      position: relative;
-      width: 1150px;
-      height: 500px;
-      margin: 20px auto 0;
-    }
-    #frequencyPlot {
-      border: 1px solid #d3d3d3;
-    }
-    #noteCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- (Optional) Debug panel removed
-  <div id="debugPanel"> ... </div>
-  -->
+  <!-- Navigation Bar -->
+  <nav>
+    <div class="nav-container">
+      <!-- Left-aligned brand (two lines) -->
+      <div class="brand">
+        <p class="small-text">Quinn Fleming's</p>
+        <h1>Music Learning Tools</h1>
+      </div>
+
+      <!-- Centered links -->
+      <ul>
+        <li><a href="https://iambored456.github.io/ChromaDiatonicWheel/">ChromaDiatonicWheel</a></li>
+        <li><a href="https://iambored456.github.io/Student-Notation/">Student-Notation</a></li>
+        <li><a href="https://iambored456.github.io/PitchDetect/" class="active">PitchDetect</a></li>
+      </ul>
+
+      <!-- Right column is empty for now (can be used for future items) -->
+      <div></div>
+    </div>
+  </nav>
 
   <!-- Main Control Panel -->
   <div id="controlPanel">
@@ -225,8 +75,6 @@
         <input type="checkbox" id="labelToggle" />
         degrees
       </label>
-
-      <!-- Removed the flats/sharps toggles -->
 
       <!-- Show Accidentals toggle -->
       <label>

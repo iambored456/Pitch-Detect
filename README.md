@@ -1,1 +1,1 @@
-Live link: https://iambored456.github.io/PitchDetect/
+Live link: https://iambored456.github.io/Pitch-Detect/

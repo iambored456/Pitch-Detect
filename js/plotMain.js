@@ -61,25 +61,26 @@ function drawNotes() {
 
   noteCtx.clearRect(0, 0, w, h);
 
-  // Convert 'frequencies' to an array of x,y points
+  // Convert 'frequencies' to array of x,y points
   let notePoints = frequencies.map(freqData => {
     let { frequency, time, clarity } = freqData;
-    let midi = noteFromPitch(frequency);  // e.g. 60 is C4
+    let midi = noteFromPitch(frequency);  
     let centsOff = centsOffFromPitch(frequency, midi);
+    let pc = midi % 12;
 
     // x: how far back in time
     let x = plotStartX + plotWidth - (currentTime - time) / timeWindow * plotWidth;
 
-    // y: map MIDI note + any cents offset => vertical
+    // y: map MIDI note + cents offset => vertical
     let y = scaleY(midi + centsOff / 100);
 
     // color: fade between color of pcBase & pcNext
     let color = colorFromNoteCustom(midi + centsOff / 100);
 
-    return { x, y, time, clarity, color };
+    return { x, y, time, clarity, color, pc };
   });
 
-  // First connect “nearby” points with lines
+  // Draw connecting lines
   noteCtx.strokeStyle = 'rgba(0,0,0,0.6)';
   noteCtx.lineWidth = 2;
   noteCtx.beginPath();
@@ -99,8 +100,12 @@ function drawNotes() {
   }
   noteCtx.stroke();
 
-  // Then draw a circle at each point
+  // Draw circles
   notePoints.forEach(pt => {
+    if (!showAccidentals && !isInMajorScale(pt.pc)) {
+      return; // Skip if hiding accidentals
+    }
+
     let opacity = Math.min(pt.clarity * 0.5, 1);
     noteCtx.fillStyle = `rgba(${pt.color[0]}, ${pt.color[1]}, ${pt.color[2]}, ${opacity})`;
     noteCtx.beginPath();

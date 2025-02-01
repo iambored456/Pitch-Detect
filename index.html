@@ -1,99 +1,101 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
   <title>Pitch Detector</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- NAVIGATION BAR -->
   <nav>
     <div class="nav-container">
-      <!-- Left-aligned brand (two lines) -->
+      <!-- Left-aligned title -->
       <div class="brand">
         <p class="small-text">Quinn Fleming's</p>
         <h1>Music Learning Tools</h1>
       </div>
       
-      <!-- Centered links -->
+      <!-- Centered navigation links -->
       <ul>
         <li><a href="https://iambored456.github.io/Diatonic-Compass/">Diatonic-Compass</a></li>
         <li><a href="https://iambored456.github.io/Student-Notation/">Student-Notation</a></li>
         <li><a href="https://iambored456.github.io/Pitch-Detect/" class="active">Pitch-Detect</a></li>
       </ul>
 
-      <!-- Right column is empty for now (can be used for future items) -->
+      <!-- Empty spacer for layout balance -->
       <div></div>
     </div>
   </nav>
 
-  <!-- Main Control Panel -->
+  <!-- MAIN CONTROL PANEL -->
   <div id="controlPanel">
-
-    <!-- Start pitch detection -->
-    <button id="startBtn" class="startBtn" onclick="startPitchDetect();" aria-label="Start Pitch Detection">
+    <!-- Start/Stop Button -->
+    <button id="startBtn" class="startBtn" onclick="startPitchDetect()" 
+            aria-label="Start Pitch Detection">
       Start
     </button>
     
-    <!-- Detector Readout -->
+    <!-- PITCH DISPLAY AREA -->
     <div id="detector" class="vague">
       <div><span id="pitch">--</span> Hz</div>
       <div>
         <span id="note">--</span><span id="octave">-</span>
       </div>
+      <!-- Canvas for pitch visualization -->
       <canvas id="output" width="100" height="42"></canvas>
+      <!-- Detune display -->
       <div id="detune">
         <span id="detune_amt">--</span>
-        <span id="flat">cents &#9837;</span>
-        <span id="sharp">cents &#9839;</span>
+        <span id="flat">cents &#9837;</span>  <!-- Flat symbol -->
+        <span id="sharp">cents &#9839;</span> <!-- Sharp symbol -->
       </div>
     </div>
 
-    <!-- Tonic & Toggles Box -->
+    <!-- TONIC SELECTION & SETTINGS -->
     <div id="tonicBox">
       <label for="tonicSelect">Tonic:</label>
-      <!-- Updated to list all 17 pitch classes explicitly -->
+      <!-- Full 17-option dropdown -->
       <select id="tonicSelect" aria-label="Select Tonic">
-        <option value="C">C</option>
-        <option value="C♯">C♯</option>
-        <option value="D♭">D♭</option>
-        <option value="D">D</option>
-        <option value="D♯">D♯</option>
-        <option value="E♭">E♭</option>
-        <option value="E">E</option>
-        <option value="F">F</option>
-        <option value="F♯">F♯</option>
-        <option value="G♭">G♭</option>
-        <option value="G">G</option>
-        <option value="G♯">G♯</option>
-        <option value="A♭">A♭</option>
-        <option value="A">A</option>
-        <option value="A♯">A♯</option>
-        <option value="B♭">B♭</option>
-        <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="C♯">C♯</option>
+          <option value="D♭">D♭</option>
+          <option value="D">D</option>
+          <option value="E♭">E♭</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="F♯">F♯</option>
+          <option value="G♭">G♭</option>
+          <option value="G">G</option>
+          <option value="A♭">A♭</option>
+          <option value="A">A</option>
+          <option value="B♭">B♭</option>
+          <option value="B">B</option>
       </select>
 
-      <!-- Degrees checkbox -->
+      <!-- DEGREES TOGGLE -->
       <label>
         <input type="checkbox" id="labelToggle" />
         degrees
       </label>
 
-      <!-- Show Accidentals toggle -->
+      <!-- ACCIDENTALS TOGGLE -->
       <label>
         <input type="checkbox" id="accidentalsToggle" />
         Show Accidentals
       </label>
     </div>
 
-    <!-- Drone Box -->
+    <!-- DRONE CONTROLS -->
     <div id="droneBox">
       <button class="droneBtn" id="droneBtn">Drone</button>
       
+      <!-- OCTAVE SELECTION -->
       <div id="octaveToggles">
         <button class="octaveBtn" id="oct2Btn">Oct 2</button>
         <button class="octaveBtn active" id="oct3Btn">Oct 3</button>
         <button class="octaveBtn" id="oct4Btn">Oct 4</button>
       </div>
 
+      <!-- VOLUME CONTROL -->
       <div id="volumeContainer">
         <label for="volumeSlider">Volume</label>
         <div id="volumeSliderWrapper">
@@ -106,65 +108,77 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- Plot + Note Visualization -->
+  <!-- Y-AXIS CONTROLS (Top) -->
+  <div id="yAxisControlsTop" class="yAxisControls">
+    <button id="yAxisUpperExpandBtn" aria-label="Expand Upper Y-Axis">↑</button>
+    <button id="yAxisUpperContractBtn" aria-label="Contract Upper Y-Axis">↓</button>
+  </div>
+
+  <!-- VISUALIZATION AREA -->
   <div id="plotContainer">
     <canvas id="frequencyPlot" width="1150" height="500"></canvas>
     <canvas id="noteCanvas" width="1150" height="500"></canvas>
   </div>
 
-  <!-- JS Files -->
-  <script src="js/globals.js"></script>
-  <script src="js/plotAxis.js"></script>
-  <script src="js/toggles.js"></script>
-  <script src="js/drone.js"></script>
-  <script src="js/plotMain.js"></script>
-  <script src="js/pitchdetection.js"></script>
+  <!-- Y-AXIS CONTROLS (Bottom) -->
+  <div id="yAxisControlsBottom" class="yAxisControls">
+    <button id="yAxisLowerContractBtn" aria-label="Contract Lower Y-Axis">↑</button>
+    <button id="yAxisLowerExpandBtn" aria-label="Expand Lower Y-Axis">↓</button>
+  </div>
 
-  <!-- Inline JS to wire up UI events -->
+  <!-- SCRIPTS -->
+  <script src="js/globals.js"></script>    <!-- Shared variables -->
+  <script src="js/plotAxis.js"></script>   <!-- Graph drawing -->
+  <script src="js/toggles.js"></script>    <!-- Settings handlers -->
+  <script src="js/drone.js"></script>      <!-- Sound generation -->
+  <script src="js/plotMain.js"></script>   <!-- Note visualization -->
+  <script src="js/pitchdetection.js"></script> <!-- Core logic -->
+  <script src="js/yAxisControls.js"></script>  <!-- Y-Axis control logic -->
+
+  <!-- EVENT LISTENERS -->
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // Tonic dropdown
-      document.getElementById("tonicSelect").addEventListener("change", function() {
-        setTonic(this.value); 
-      });
+  document.addEventListener("DOMContentLoaded", function() {
+    // TONIC SELECTOR
+    document.getElementById("tonicSelect").addEventListener("change", function() {
+      setTonic(this.value); 
+    });
 
-      // Degrees
-      document.getElementById("labelToggle").addEventListener("change", function() {
-        setLabelMode(this.checked);
-      });
+    // DEGREES TOGGLE
+    document.getElementById("labelToggle").addEventListener("change", function() {
+      setLabelMode(this.checked);
+    });
 
-      // Show Accidentals
-      document.getElementById("accidentalsToggle").addEventListener("change", function() {
-        setAccidentalsVisibility(this.checked);
-      });
+    // ACCIDENTALS TOGGLE
+    document.getElementById("accidentalsToggle").addEventListener("change", function() {
+      setAccidentalsVisibility(this.checked);
+    });
 
-      // Drone button
-      const droneBtn = document.getElementById("droneBtn");
-      droneBtn.addEventListener("click", function() {
-        toggleDrone(); // your function in drone.js
-      });
+    // DRONE BUTTON
+    const droneBtn = document.getElementById("droneBtn");
+    droneBtn.addEventListener("click", function() {
+      toggleDrone();
+    });
 
-      // Octave toggles
-      const oct2Btn = document.getElementById("oct2Btn");
-      const oct3Btn = document.getElementById("oct3Btn");
-      const oct4Btn = document.getElementById("oct4Btn");
+    // OCTAVE BUTTONS
+    const oct2Btn = document.getElementById("oct2Btn");
+    const oct3Btn = document.getElementById("oct3Btn");
+    const oct4Btn = document.getElementById("oct4Btn");
 
-      [oct2Btn, oct3Btn, oct4Btn].forEach(btn => {
-        btn.addEventListener("click", function() {
-          setDroneOctave(this);
-        });
-      });
-
-      // Volume slider
-      const volumeSlider = document.getElementById("volumeSlider");
-      volumeSlider.addEventListener("input", function() {
-        let vol = parseInt(this.value, 10);
-        setDroneVolume(vol);
+    [oct2Btn, oct3Btn, oct4Btn].forEach(btn => {
+      btn.addEventListener("click", function() {
+        setDroneOctave(this);
       });
     });
+
+    // VOLUME SLIDER
+    const volumeSlider = document.getElementById("volumeSlider");
+    volumeSlider.addEventListener("input", function() {
+      let vol = parseInt(this.value, 10);
+      setDroneVolume(vol);
+    });
+  });
   </script>
 </body>
 </html>

@@ -22,110 +22,109 @@ function generateNotes(minFreq, maxFreq) {
 
 /**
  * getLineStyle(offsetPC)
- *   offsetPC = (pc - tonicPC + 12) % 12
- *   0 => Tonic, 7 => “5th”, etc. 
- *
- * If you want the “tonic line” to be red, offsetPC=0 => red.
- * If you want the “dominant (5th) line” to have a grey rectangle, offsetPC=7 => ...
- * etc.
+ * Returns a style object for drawing a line or the string "greyRect" 
+ * for offsetPC=7 (the 5th) where a grey background is desired.
  */
 function getLineStyle(offsetPC) {
   switch (offsetPC) {
-    case 0:  // Tonic
-      return { color: "#FF0000", dash: [], width: 2 }; // Red line
-    case 7:  // 5th above tonic
-      return "greyRect"; // fill a grey rectangle row
-    case 5:  // 4th above tonic
-      return { color: "#000000", dash: [5, 5], width: 1 };
-    // Add or remove cases as you like
-    default:
-      // Possibly just a normal black line
-      return { color: "#000000", dash: [], width: 1 };
-  }
-}
-
-function getLineStyle(offsetPC) {
-  // This switch returns a style object or "greyRect" or null
-  // for each offsetPC (0..11).
-  switch (offsetPC) {
-    case 0:  // Tonic => red line
-      return { color: "#FF0000", dash: [], width: 2 };
-    case 1:  
+    case 0:
+      return { color: "#FF0000", dash: [], width: 2 }; // Tonic: red solid line.
+    case 1:
       return null;
-    case 2:  
+    case 2:
       return { color: "#000000", dash: [], width: 1 };
-    case 3:  
+    case 3:
       return null;
-    case 4:  
-      return { color: "#000000", dash: [5,5], width: 1 };
-    case 5:  
+    case 4:
+      return { color: "#000000", dash: [5, 5], width: 1 }; // Dashed line at offset 4 (E).
+    case 5:
       return null;
-    case 6:  
+    case 6:
       return { color: "#000000", dash: [], width: 1 };
-    case 7:  // 5th => grey rectangle row
-      return "greyRect";
-    case 8:  
+    case 7:
+      return "greyRect"; // Grey rectangle for the 5th (G).
+    case 8:
       return { color: "#000000", dash: [], width: 1 };
-    case 9:  
+    case 9:
       return null;
-    case 10: 
+    case 10:
       return { color: "#000000", dash: [], width: 1 };
-    case 11: 
+    case 11:
       return null;
     default:
       return null;
   }
 }
-
 
 /**
  * drawYAxis(notes, logMin, logMax, plotHeight)
- * Clears & redraws the Y-axis with horizontal lines. 
- * Now uses getOffsetPitchClass(midi) => offsetPC for the line style.
+ * Clears and redraws the Y-axis.
+ * 
+ * In this version:
+ * - The vertical gap (cell height) is computed between successive note y–coordinates.
+ * - Each label’s background box now spans two cells (i.e. height = 2*gap) 
+ *   and is shifted upward by one cell (i.e. its top is at y - gap) so that
+ *   the text (drawn at y) remains aligned with the drawn line.
+ * - For grey rectangles (offsetPC=7), the rectangle now covers two cells.
+ * - Left/right column x–offsets are preserved.
  */
 function drawYAxis(notes, logMin, logMax, plotHeight) {
   if (!plotCtx) return;
 
-  // Clear the entire Y-axis region
+  // Clear the entire Y-axis region.
   plotCtx.clearRect(0, 0, plotCanvas.width, plotCanvas.height);
 
-  // 1) Decide which pitch classes are in Column A vs. B
-  //    (swapping if the Tonic PC is in B)
-  let colA = getColumnA(); // either [0,2,4,6,8,10] or [1,3,5,7,9,11]
+  // Determine which pitch classes go to left (column A) vs. right (column B).
+  let colA = getColumnA();
   let colB = getColumnB();
 
-  // 2) Hardcode the X positions for left vs right side
+  // Use your original x–offsets.
   const rightColumnX1 = yAxisWidth + plotWidth + 25;
   const rightColumnX2 = yAxisWidth + plotWidth + 75;
   const leftColumnX1  = yAxisWidth - 25;
   const leftColumnX2  = yAxisWidth - 75;
 
-  let prevY = plotHeight;
+  // Precompute y–coordinates for each note.
+  let yCoords = [];
+  for (let i = 0; i < notes.length; i++) {
+    let logFreq = Math.log(notes[i].freq);
+    let normalized = (logFreq - logMin) / (logMax - logMin);
+    let y = plotHeight - normalized * plotHeight;
+    yCoords.push(y);
+  }
 
-  notes.forEach(note => {
-    let { midi, freq } = note;
+  // Loop over each note (by index) and compute the vertical gap.
+  for (let i = 0; i < notes.length; i++) {
+    let note = notes[i];
+    let midi = note.midi;
+    // Anchor point: the note's own y–coordinate.
+    let y = yCoords[i];
 
-    // offset-based line style logic (tonic= red, offset=7= greyRect, etc.)
+    // Compute the gap (cell height) for this note.
+    let gap;
+    if (i < notes.length - 1) {
+      gap = yCoords[i] - yCoords[i+1];
+    } else {
+      gap = (i > 0) ? (yCoords[i-1] - y) : 20;
+    }
+    if (gap < 15) gap = 15; // enforce a minimum gap
+
+    // For our new label background, we want it to cover two cells.
+    // We'll fix its top at (y - gap) so that its center remains at y.
+    let rectTop = y - gap;
+    let rectHeight = 2 * gap;
+
+    // Get the line style.
     let offsetPC = getOffsetPitchClass(midi);
     let style = getLineStyle(offsetPC);
 
-    // Compute Y via log scaling
-    let logFreq = Math.log(freq);
-    let normalized = (logFreq - logMin) / (logMax - logMin);
-    let y = plotHeight - normalized * plotHeight;
-
-    // Fill a grey rectangle if style === "greyRect"
+    // Draw grey rectangle if required.
     if (style === "greyRect") {
-      let rowHeight = prevY - y;
-      if (rowHeight > 0) {
-        plotCtx.fillStyle = "rgba(200, 200, 200, 0.5)";
-        plotCtx.fillRect(plotStartX, y - 13, plotWidth, 26);
-      }
-    }
-    prevY = y;
-    
-    // If style is an object => draw line
-    if (style && typeof style === "object") {
+      // Now, draw the grey rectangle covering two cells.
+      plotCtx.fillStyle = "rgba(200, 200, 200, 0.5)";
+      plotCtx.fillRect(plotStartX, y - gap, plotWidth, 2 * gap);
+    } else if (style && typeof style === "object") {
+      // Draw the horizontal line at the anchor y.
       plotCtx.strokeStyle = style.color;
       plotCtx.lineWidth = style.width;
       plotCtx.setLineDash(style.dash || []);
@@ -133,81 +132,69 @@ function drawYAxis(notes, logMin, logMax, plotHeight) {
       plotCtx.moveTo(0, y);
       plotCtx.lineTo(plotCanvas.width, y);
       plotCtx.stroke();
-      // reset
       plotCtx.setLineDash([]);
       plotCtx.strokeStyle = "#000";
       plotCtx.lineWidth = 1;
     }
 
-    // Decide which label to draw for this note
+    // Get the label text.
     let displayedLabel = getNoteLabel(midi);
-    if (!displayedLabel) {
-      // e.g. out-of-scale note & showAccidentals==false => skip
-      return;
+    if (!displayedLabel) continue;
+    let octave = Math.floor(midi / 12) - 1;
+    if (!useScaleDegrees) {
+      displayedLabel += octave;
     }
 
-    // If you want Tonic’s offset=0 => index 0 color, 
-    // do offset-based background color:
-    // let bgColor = labelBackgroundColors[offsetPC] || "#fff";
-
-    // Or if you want the absolute pitch class color:
+    // Determine the background color for the label.
     let pc = midi % 12;
-    let bgColor = isInMajorScale(pc) ? labelBackgroundColors[offsetPC] : null;
+    let bgColor = null;
+    if (isInMajorScale(pc)) {
+      bgColor = labelBackgroundColors[offsetPC] || null;
+    } else if (showAccidentals && displayedLabel) {
+      bgColor = "#ffffff";
+    }
 
-    // In-scale => bigger font, out-of-scale => smaller
+    // Choose the text size.
     let fontSize = isInMajorScale(pc) ? 18 : 14;
     plotCtx.font = `${fontSize}px Arial`;
     plotCtx.textBaseline = "middle";
 
-    // 3) Check if this absolute pc is in colA or colB
-    let belongsToA = colA.includes(pc); 
+    // Determine left/right x–positions.
+    let belongsToA = colA.includes(pc);
     let leftX  = belongsToA ? leftColumnX1 : leftColumnX2;
     let rightX = belongsToA ? rightColumnX1 : rightColumnX2;
 
+    // Draw the label background if needed.
     if (bgColor) {
-      // Left background
       plotCtx.fillStyle = bgColor;
-      plotCtx.fillRect(leftX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
+      // Draw the left and right background rectangles with width 50 and height = 2*gap.
+      plotCtx.fillRect(leftX - 25, rectTop, 50, rectHeight);
+      plotCtx.fillRect(rightX - 25, rectTop, 50, rectHeight);
     }
-
-    // Left text
+    // Draw the text at the anchor y so that it stays aligned with the drawn line.
     plotCtx.fillStyle = "#000";
     plotCtx.textAlign = "center";
     plotCtx.fillText(displayedLabel, leftX, y);
-
-    if (bgColor) {
-      // Right background
-      plotCtx.fillStyle = bgColor;
-      plotCtx.fillRect(rightX - 25, y - (fontSize * 0.72), 50, fontSize * 1.44);
-    }
-
-    // Right text
-    plotCtx.fillStyle = "#000";
     plotCtx.fillText(displayedLabel, rightX, y);
-  });
+  } // end for loop
 
-  // Draw bounding lines for the plot area
+  // Finally, draw the bounding lines for the plot area.
   plotCtx.strokeStyle = "#000000";
   plotCtx.lineWidth = 1;
   plotCtx.setLineDash([]);
-
-  // Left boundary
   plotCtx.beginPath();
   plotCtx.moveTo(yAxisWidth, 0);
   plotCtx.lineTo(yAxisWidth, plotHeight);
   plotCtx.stroke();
-
-  // Right boundary
   plotCtx.beginPath();
   plotCtx.moveTo(plotWidth + yAxisWidth, 0);
   plotCtx.lineTo(plotWidth + yAxisWidth, plotHeight);
   plotCtx.stroke();
 }
 
-
 /**
  * scaleY(midiValue)
- *  Maps midiValue -> [0..plotHeight] by the notesInRange array
+ * Maps midiValue -> [0..plotHeight] by the notesInRange array.
  */
 function scaleY(midiValue) {
   if (!notesInRange.length) return plotHeight / 2;
@@ -218,9 +205,7 @@ function scaleY(midiValue) {
 }
 
 /**
- * For color interpolation between pitch classes,
- * we can still use the absolute pc (midiFloor % 12)
- * or do something offset-based. Shown here is absolute pc:
+ * For color interpolation between pitch classes.
  */
 function hexToRgb(hex) {
   let bigint = parseInt(hex.slice(1), 16);
@@ -236,8 +221,7 @@ function colorFromNoteCustom(pitch) {
   let fraction = pitch - midiFloor;
   let pcBase = midiFloor % 12;
   let pcNext = (pcBase + 1) % 12;
-
   let baseColor = hexToRgb(labelBackgroundColors[pcBase]);
   let nextColor = hexToRgb(labelBackgroundColors[pcNext]);
-  return interpolateRgb(baseColor, nextColor, fraction); // [r,g,b]
+  return interpolateRgb(baseColor, nextColor, fraction);
 }

@@ -154,6 +154,8 @@ const labelBackgroundColors = {
   11: "#dd95d6"
 };
 
+
+
 // ===================== Offsets & Scale Logic =====================
 
 /**
@@ -161,18 +163,20 @@ const labelBackgroundColors = {
  */
 const tonicToSemisFromC = {
   "C":   0,
-  "C♯":  1, "D♭": 1,
+  "C♯":  1,  "D♭": 1,
   "D":   2,
-  "D♯":  3, "E♭": 3,
-  "E":   4,
+  "D♯":  3,  "E♭": 3,
+  "E":   4,  "F♭": 4,  // F♭ enharmonically = E
+  "E♯":  5,            // E♯ enharmonically = F
   "F":   5,
-  "F♯":  6, "G♭": 6,
+  "F♯":  6,  "G♭": 6,
   "G":   7,
-  "G♯":  8, "A♭": 8,
+  "G♯":  8,  "A♭": 8,
   "A":   9,
   "A♯":  10, "B♭": 10,
   "B":   11
 };
+
 
 // Column definitions
 const defaultColumnA = [0, 2, 4, 6, 8, 10];
@@ -225,31 +229,76 @@ function isInMajorScale(pc) {
   return scalePCs.includes(pc);
 }
 
-/**
- * Return the spelled label for a given MIDI note, 
- * depending on useScaleDegrees and showAccidentals.
- */
-function getNoteLabel(midiNote) {
+function getNoteName(midiNote) {
   let pc = midiNote % 12;
   if (isInMajorScale(pc)) {
-    // In-scale
-    if (useScaleDegrees) {
-      let scalePCs = majorScales[currentTonicName];
-      let idx = scalePCs.indexOf(pc);
-      return (idx >= 0) ? String(idx + 1) : "";
-    } else {
-      // spelled name
-      let mapObj = scaleSpellings[currentTonicName] || {};
-      return mapObj[pc] || "";
-    }
+    let mapObj = scaleSpellings[currentTonicName] || {};
+    return mapObj[pc] || "";
   } else {
-    // out of scale => only show if showAccidentals
     if (showAccidentals) {
       return pitchNamesBoth[pc] || "";
     }
     return "";
   }
 }
+
+/**
+ * Return the spelled label for a given MIDI note, 
+ * depending on useScaleDegrees and showAccidentals.
+ */
+function getNoteLabel(midiNote) {
+  const pc = midiNote % 12;
+
+  // If degrees mode is on, show scale degrees instead of note names
+  if (useScaleDegrees) {
+    // The offsetPC is how many semitones above the current tonic
+    // (0 means Tonic, 7 means the 5th, etc.)
+    const offsetPC = getOffsetPitchClass(midiNote);
+
+    // Maps offsetPC => "1", "#1/b2", "2", "#2/b3", "3", ...
+    const degreeMap = {
+      0: "1",
+      1: "#1 / b2",
+      2: "2",
+      3: "#2 / b3",
+      4: "3",
+      5: "4",
+      6: "#4 / b5",
+      7: "5",
+      8: "#5 / b6",
+      9: "6",
+      10: "#6 / b7",
+      11: "7"
+    };
+    const label = degreeMap[offsetPC] || "";
+
+    // Check if this pitch class is part of the current tonic’s major scale
+    if (isInMajorScale(pc)) {
+      // In-scale => offsetPC is one of [0,2,4,5,7,9,11]
+      // Return the simple diatonic label (1..7)
+      return label;
+    } else {
+      // Out-of-scale => only show if showAccidentals is ON
+      return showAccidentals ? label : "";
+    }
+
+  } else {
+    // Degrees toggle is OFF => use spelled note names.
+    // (Your original code, but trimmed down here)
+    if (isInMajorScale(pc)) {
+      // In-scale => return from scaleSpellings
+      const mapObj = scaleSpellings[currentTonicName] || {};
+      return mapObj[pc] || "";
+    } else {
+      // Out-of-scale => only show if accidentals is ON
+      if (showAccidentals) {
+        return pitchNamesBoth[pc] || "";
+      }
+      return "";
+    }
+  }
+}
+
 
 // ===================== getLineStyle(offsetPC) =====================
 /**

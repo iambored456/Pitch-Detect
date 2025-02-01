@@ -101,15 +101,44 @@ function drawNotes() {
   noteCtx.stroke();
 
   // Draw circles
+  // Draw circles for all 12 chromatic notes.
   notePoints.forEach(pt => {
-    if (!showAccidentals && !isInMajorScale(pt.pc)) {
-      return; // Skip if hiding accidentals
-    }
-
+    // Always draw the circle regardless of diatonic status.
     let opacity = Math.min(pt.clarity * 0.5, 1);
     noteCtx.fillStyle = `rgba(${pt.color[0]}, ${pt.color[1]}, ${pt.color[2]}, ${opacity})`;
     noteCtx.beginPath();
     noteCtx.arc(pt.x, pt.y, 9, 0, 2 * Math.PI);
     noteCtx.fill();
   });
+}
+
+/**
+ * For color interpolation between pitch classes.
+ */
+function hexToRgb(hex) {
+  let bigint = parseInt(hex.slice(1), 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+function interpolateRgb(c1, c2, factor) {
+  return c1.map((v, i) => Math.round(v + factor * (c2[i] - v)));
+}
+
+/**
+ * Modified colorFromNoteCustom:
+ * Now the function computes the note’s pitch class relative to the current tonic.
+ * This ensures that the color originally at index 0 in labelBackgroundColors (i.e. "#f090ae")
+ * is always assigned to the tonic, and the remaining colors “follow” accordingly.
+ */
+function colorFromNoteCustom(pitch) {
+  let midiFloor = Math.floor(pitch);
+  let fraction = pitch - midiFloor;
+  // Get the tonic’s pitch class (e.g. 0 for C, 2 for D, etc.)
+  let tonicPC = getCurrentTonicPC();
+  // Compute the relative pitch class (offset from the tonic)
+  let relativePC = ((midiFloor % 12) - tonicPC + 12) % 12;
+  let nextRelativePC = (relativePC + 1) % 12;
+  let baseColor = hexToRgb(labelBackgroundColors[relativePC]);
+  let nextColor = hexToRgb(labelBackgroundColors[nextRelativePC]);
+  return interpolateRgb(baseColor, nextColor, fraction);
 }
